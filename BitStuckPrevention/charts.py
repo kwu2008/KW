@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def Scatter():
+
+def Scatter_Demo():
     N = 100
 
     X = np.random.rand(N)
@@ -15,7 +16,11 @@ def Scatter():
     plt.show()
 
 
+def Chart_Demo():
+
+    Scatter_Demo()
+
 
 if __name__ == '__main__':
-        Scatter()
+        Chart_Demo()
 

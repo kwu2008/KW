@@ -17,9 +17,7 @@ def BSP_Main():
     BSP_LoadData()
     BSP_ProcessData()
     BSP_DisplayData()
-
-
-
+ 
 
 if __name__ == '__main__':
         BSP_Main()
