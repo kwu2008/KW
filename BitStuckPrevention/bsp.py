@@ -12,10 +12,8 @@ class BSP:
     fileEmaPath = ''
     fileAnaName = 'S-503000-523000-Analysis.csv'
     fileAnaPath = ''
-    cvsHeader = ''
-    cvsCurrentLine = {}
     lastTimeStamp = -1.0
-
+    normRppvList = []
 
     def __init__(self):
 
@@ -59,12 +57,17 @@ class BSP:
 
         if self.lastTimeStamp < 0:
             self.lastTimeStamp = float(line['TIME_1900'])
+            self.normRppvList = []
+            self.normRppvList.append(float(line['RPPV']))
             return
 
         timeStamp = float(line['TIME_1900'])
         deltaSeconds = (timeStamp - self.lastTimeStamp) * (24 * 60 * 60)
+
+        self.normRppvList.append(float(line['RPPV']))
         
         if deltaSeconds >= 1.0:
+            line['RPPV'] = str(sum(self.normRppvList)/len(self.normRppvList))
             csvWriter.writerow(line)
             self.lastTimeStamp = -1.0 
         
