@@ -15,6 +15,14 @@ class BSP:
     lastTimeStamp = -1.0
     normRppvList = []
 
+    emaCoeff = 0.1  # 10%
+
+    ema = -10001.0
+    emaDroppingTimeThreshold = 60.0  # in seconds
+    emaDroppingStartTimeStamp = -1.0
+    emaRisingStartTimeStamp = -1.0
+    bitStuck = False
+
     def __init__(self):
 
         print('BSP.__init__')
@@ -67,7 +75,8 @@ class BSP:
         self.normRppvList.append(float(line['RPPV']))
         
         if deltaSeconds >= 1.0:
-            line['RPPV'] = str(sum(self.normRppvList)/len(self.normRppvList))
+            line['RPPV'] = str(int(sum(self.normRppvList)/len(self.normRppvList)))
+            line['CMPP'] = str(round(float(line['CMPP']), 2))
             csvWriter.writerow(line)
             self.lastTimeStamp = -1.0 
         
@@ -105,9 +114,15 @@ class BSP:
 
     def WriteToEmaFile(self, csvWriter, line):
  
-        ema = float(line['RPPV'])
- 
-        line['EMA'] = str(ema)
+        rppv = float(line['RPPV'])
+
+        if self.ema < 0:
+            self.ema = rppv
+        else:
+            emaNow = rppv * self.emaCoeff + ( 1.0 - self.emaCoeff) * self.ema
+            self.ema = emaNow
+
+        line['EMA'] = str(int(self.ema))
         
         csvWriter.writerow(line)
 
@@ -116,6 +131,11 @@ class BSP:
     def AnalyzeBitStuck(self):
 
         print('BSP.AnalyzeBitStuck')
+
+        self.ema = -10001.0
+        self.emaDroppingStartTimeStamp = -1.0
+        self.emaRisingStartTimeStamp = -1.0
+        self.bitStuck = False
 
         with open(self.fileAnaPath, 'w', newline='') as fileAna:
 
@@ -130,7 +150,7 @@ class BSP:
 
                         print(f'Ema column names are {", ".join(line)}')
 
-                        line['BIT_STUCK'] = '0'
+                        line['BIT_STUCK_DETECT'] = '0'
 
                         print(f'Ana column names are {", ".join(line)}')
 
@@ -140,11 +160,45 @@ class BSP:
 
                     self.WriteToAnaFile(csvWriter, line)
 
+        if self.bitStuck:
+            print('Bit Stuck detected!!!')
+
 
     def WriteToAnaFile(self, csvWriter, line):
  
-        line['BIT_STUCK'] = 'not_implemented'
-        
+        emaNow = float(line['EMA'])
+        timeNow = float(line['TIME_1900'])
+
+        if self.ema < -10000.0:
+            line['BIT_STUCK_DETECT'] = 'Start'
+            self.ema = emaNow
+            csvWriter.writerow(line)
+            return
+
+        if emaNow < self.ema:
+            if self.emaDroppingStartTimeStamp < 0:
+                self.emaDroppingStartTimeStamp = timeNow
+
+            self.emaRisingStartTimeStamp = -1.0
+
+            emaDroppingLastingSeconds = (timeNow - self.emaDroppingStartTimeStamp) * (24*60*60)
+
+            if emaDroppingLastingSeconds >= self.emaDroppingTimeThreshold:
+                self.bitStuck = True
+                line['BIT_STUCK_DETECT'] = 'BitStuck'
+            else:
+                line['BIT_STUCK_DETECT'] = 'EmaDropping(' + str(round(emaDroppingLastingSeconds,3)) +')'
+        else:
+            if self.emaRisingStartTimeStamp < 0:
+                self.emaRisingStartTimeStamp = timeNow
+
+            self.emaDroppingStartTimeStamp = -1.0
+
+            emaRisingLastingSeconds = (timeNow - self.emaRisingStartTimeStamp) * (24*60*60)
+
+            line['BIT_STUCK_DETECT'] = 'EmaRising(' + str(round(emaRisingLastingSeconds,3)) +')'
+
+        self.ema = emaNow
         csvWriter.writerow(line)
 
 
