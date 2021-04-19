@@ -26,6 +26,7 @@ class BitStuckDetect:
     seriesRPPV = []
     seriesEMA = []
     seriesTIME1900 = []
+    seriesTime = []
     seriesBITSTUCKDETECT = []
 
 
@@ -216,6 +217,7 @@ class BitStuckDetect:
         self.seriesEMA = []
         self.seriesTIME1900 = []
         self.seriesBITSTUCKDETECT = []
+        self.seriesTime = []
 
         with open(self.fileAnaPath, 'r') as fileAna:
             csvReader = csv.DictReader(fileAna, delimiter=',')
@@ -237,7 +239,10 @@ class BitStuckDetect:
                 else:
                     self.seriesBITSTUCKDETECT.append( -1.0 )
  
-         
+        for i in range(len(self.seriesTIME1900)):
+            seconds = (self.seriesTIME1900[i] - self.seriesTIME1900[0] ) * (24*60*60)
+            self.seriesTime.append(seconds)
+
 
     def Analyze(self):
 
