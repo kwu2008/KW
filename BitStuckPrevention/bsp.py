@@ -2,7 +2,7 @@ import sys
 import os
 import csv
 
-class BSP:
+class BitStuckDetect:
 
     fileSrcName = 'S-503000-523000.csv'
     fileSrcPath = ''
@@ -22,6 +22,12 @@ class BSP:
     emaDroppingStartTimeStamp = -1.0
     emaRisingStartTimeStamp = -1.0
     bitStuck = False
+
+    seriesRPPV = []
+    seriesEMA = []
+    seriesTIME1900 = []
+    seriesBITSTUCKDETECT = []
+
 
     def __init__(self):
 
@@ -202,18 +208,58 @@ class BSP:
         csvWriter.writerow(line)
 
 
+    def CreateDataSeries(self):
+
+        print('BSP.CreateDataSeries')
+
+        self.seriesRPPV = []
+        self.seriesEMA = []
+        self.seriesTIME1900 = []
+        self.seriesBITSTUCKDETECT = []
+
+        with open(self.fileAnaPath, 'r') as fileAna:
+            csvReader = csv.DictReader(fileAna, delimiter=',')
+            lineIdx = -1
+            for line in csvReader:
+
+                lineIdx += 1
+
+                self.seriesRPPV.append( float(line['RPPV']) ) 
+                self.seriesEMA.append( float(line['EMA']) ) 
+                self.seriesTIME1900.append( float(line['TIME_1900']) ) 
+
+                txt = line['BIT_STUCK_DETECT']
+
+                if 'BitStuck' in txt:
+                    self.seriesBITSTUCKDETECT.append( 0.0 )
+                elif 'EmaRising' in txt:
+                    self.seriesBITSTUCKDETECT.append( 1.0 )
+                else:
+                    self.seriesBITSTUCKDETECT.append( -1.0 )
+ 
+         
+
+    def Analyze(self):
+
+        print('BSP.Analyze')
+
+        self.NormalizeDataAndSave()
+
+        self.CalculateEmaAndSave()
+        
+        self.AnalyzeBitStuck()
+
+        self.CreateDataSeries()
+       
+
 
 def Main():
 
     print('Main')
 
-    bsp = BSP()
+    bsp = BitStuckDetect()
 
-    bsp.NormalizeDataAndSave()
-
-    bsp.CalculateEmaAndSave()
-    
-    bsp.AnalyzeBitStuck()
+    bsp.Analyze()
 
  
 
