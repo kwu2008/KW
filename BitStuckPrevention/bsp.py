@@ -233,11 +233,11 @@ class BitStuckDetect:
                 txt = line['BIT_STUCK_DETECT']
 
                 if 'BitStuck' in txt:
-                    self.seriesBITSTUCKDETECT.append( 0.0 )
+                    self.seriesBITSTUCKDETECT.append( -1.0 )
                 elif 'EmaRising' in txt:
                     self.seriesBITSTUCKDETECT.append( 1.0 )
                 else:
-                    self.seriesBITSTUCKDETECT.append( -1.0 )
+                    self.seriesBITSTUCKDETECT.append( 0.0 )
  
         for i in range(len(self.seriesTIME1900)):
             seconds = (self.seriesTIME1900[i] - self.seriesTIME1900[0] ) * (24*60*60)
